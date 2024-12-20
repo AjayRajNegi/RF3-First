@@ -1,0 +1,84 @@
+import * as THREE from "three";
+import { useRef, useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
+import earthVertexShader from "./shaders/earth/vertex.glsl";
+import { OrbitControls, useTexture } from "@react-three/drei";
+import earthFragmentShader from "./shaders/earth/fragment.glsl";
+
+const Earth = () => {
+  const sphereRef = useRef();
+  const debugSunRef = useRef();
+  const shaderMaterialRef = useRef();
+  const clock = useMemo(() => new THREE.Clock(), []);
+
+  //Spherical coordinates of the sun
+  const sunSpherical = useMemo(
+    () => new THREE.Spherical(1, Math.PI * 0.5, 0.5),
+    []
+  );
+  const sunDirection = useMemo(() => new THREE.Vector3(), []);
+
+  //Load Textures
+  const earthDayTexture = useTexture("../static/earth/day.jpg");
+  earthDayTexture.colorSpace = THREE.SRGBColorSpace;
+  const earthNightTexture = useTexture("../static/earth/night.jpg");
+  earthNightTexture.colorSpace = THREE.SRGBColorSpace;
+  const earthSpecularCloudsTexture = useTexture(
+    "../static/earth/specularClouds.jpg"
+  );
+
+  //Update sun direction
+  const updateSun = () => {
+    // Calculate sun direction from spherical coordinates
+    sunDirection.setFromSpherical(sunSpherical);
+
+    // Update debug sun position
+    if (debugSunRef.current) {
+      debugSunRef.current.position.copy(sunDirection).multiplyScalar(5);
+    }
+
+    // Update the shader material's uSunDirection uniform
+    if (shaderMaterialRef.current) {
+      shaderMaterialRef.current.uniforms.uSunDirection.value.copy(sunDirection);
+    }
+  };
+
+  //Rotate the sphere over time
+  useFrame(() => {
+    const elapsedTime = clock.getElapsedTime();
+    sphereRef.current.rotation.y = elapsedTime * 0.1;
+
+    //Update the sun direction
+    updateSun();
+  });
+
+  return (
+    <>
+      <OrbitControls />
+      {/* Lighting */}
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[3, 3, 3]} intensity={0.5} />
+      {/*  */}
+      <mesh ref={sphereRef}>
+        <sphereGeometry args={[2, 64, 64]} />
+        <shaderMaterial
+          ref={shaderMaterialRef}
+          fragmentShader={earthFragmentShader}
+          vertexShader={earthVertexShader}
+          uniforms={{
+            uDayTexture: { value: earthDayTexture },
+            uNightTexture: { value: earthNightTexture },
+            uSpecularClouds: { value: earthSpecularCloudsTexture },
+            uSunDirection: { value: sunDirection },
+          }}
+        />
+      </mesh>
+      <mesh ref={debugSunRef}>
+        <icosahedronGeometry args={[0.1, 4]} />
+        <meshBasicMaterial color="white" />
+      </mesh>
+    </>
+  );
+};
+
+export default Earth;
