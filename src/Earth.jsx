@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useCallback } from "react";
+import { Canvas } from "@react-three/fiber";
 import { useFrame } from "@react-three/fiber";
 import earthVertexShader from "./shaders/earth/vertex.glsl";
 import { OrbitControls, useTexture } from "@react-three/drei";
@@ -7,113 +8,118 @@ import earthFragmentShader from "./shaders/earth/fragment.glsl";
 import atmosphereVertexShader from "./shaders/atmosphere/vertex.glsl";
 import atmosphereFragmentShader from "./shaders/atmosphere/fragment.glsl";
 
-const Earth = () => {
-  const sphereRef = useRef();
-  const debugSunRef = useRef();
-  const shaderMaterialRef = useRef();
-  const atmosphereRef = useRef();
-  const clock = useMemo(() => new THREE.Clock(), []);
+// Earth Component
+const Earth = ({ sunDirection }) => {
+  const sphereRef = useRef(); // Ref for the Earth mesh
+  const shaderMaterialRef = useRef(); // Ref for the shader material
 
-  /**
-   * Earth
-   */
-  const earthParameters = {};
-  earthParameters.atmosphereDayColor = "#00aaff";
-  earthParameters.atmosphereTwilightColor = "#ff6600";
-
-  //Load Textures
+  // Load textures for the Earth
   const earthDayTexture = useTexture("/static/earth/day.jpg");
-  earthDayTexture.colorSpace = THREE.SRGBColorSpace;
-  earthDayTexture.anisotropy = 8;
   const earthNightTexture = useTexture("/static/earth/night.jpg");
-  earthNightTexture.colorSpace = THREE.SRGBColorSpace;
-  earthNightTexture.anisotropy = 8;
   const earthSpecularCloudsTexture = useTexture(
     "/static/earth/specularClouds.jpg"
   );
-  earthSpecularCloudsTexture.anisotropy = 8;
 
-  /**
-   * Sun
-   */
-  const sunSpherical = new THREE.Spherical(1, Math.PI * 0.5, 0.5);
-  const sunDirection = new THREE.Vector3();
+  // Optimize texture settings
+  useMemo(() => {
+    [earthDayTexture, earthNightTexture, earthSpecularCloudsTexture].forEach(
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace; // Set correct color space
+        texture.anisotropy = 4; // Lower anisotropy for better performance
+      }
+    );
+  }, [earthDayTexture, earthNightTexture, earthSpecularCloudsTexture]);
 
-  // Update
-  const updateSun = () => {
-    // Sun direction
-    sunDirection.setFromSpherical(sunSpherical);
-
-    // Debug
-    debugSunRef.current.position.copy(sunDirection).multiplyScalar(1);
-
-    // Uniforms
-    shaderMaterialRef.current.uniforms.uSunDirection.value.copy(sunDirection);
-    atmosphereRef.current.uniforms.uSunDirection.value.copy(sunDirection);
-  };
-
-  // Rotate the sphere over time
+  // Animate the Earth and update shader uniforms every frame
   useFrame(() => {
-    const elapsedTime = clock.getElapsedTime();
     if (sphereRef.current) {
-      sphereRef.current.rotation.y = elapsedTime * 0.1;
+      sphereRef.current.rotation.y += 0.001; // Slow rotation of the Earth
     }
-
-    // Update the sun direction
-    updateSun();
+    // Update the sun direction in the shader material
+    shaderMaterialRef.current.uniforms.uSunDirection.value.copy(sunDirection);
   });
 
   return (
-    <>
-      {/* Earth Mesh */}
-      <OrbitControls />
-      <mesh ref={sphereRef}>
-        <sphereGeometry args={[2, 64, 64]} />
-        <shaderMaterial
-          toneMapped={false}
-          ref={shaderMaterialRef}
-          vertexShader={earthVertexShader}
-          fragmentShader={earthFragmentShader}
-          uniforms={{
-            uDayTexture: { value: earthDayTexture },
-            uNightTexture: { value: earthNightTexture },
-            uSpecularCloudsTexture: { value: earthSpecularCloudsTexture },
-            uSunDirection: new THREE.Uniform(new THREE.Vector3(0, 0, 1)),
-            uAtmosphereDayColor: new THREE.Uniform(
-              new THREE.Color(earthParameters.atmosphereDayColor)
-            ),
-            uAtmosphereTwilightColor: new THREE.Uniform(
-              new THREE.Color(earthParameters.atmosphereTwilightColor)
-            ),
-          }}
-        />
-      </mesh>
-      <mesh ref={debugSunRef}>
-        <icosahedronGeometry args={[0.1, 2]} />
-        <meshBasicMaterial />
-      </mesh>
-      <mesh scale={1.04}>
-        <sphereGeometry args={[2, 64, 64]} />
-        <shaderMaterial
-          ref={atmosphereRef}
-          toneMapped={false}
-          side={THREE.BackSide}
-          transparent={true}
-          vertexShader={atmosphereVertexShader}
-          fragmentShader={atmosphereFragmentShader}
-          uniforms={{
-            uSunDirection: new THREE.Uniform(new THREE.Vector3(0, 0, 1)),
-            uAtmosphereDayColor: new THREE.Uniform(
-              new THREE.Color(earthParameters.atmosphereDayColor)
-            ),
-            uAtmosphereTwilightColor: new THREE.Uniform(
-              new THREE.Color(earthParameters.atmosphereTwilightColor)
-            ),
-          }}
-        />
-      </mesh>
-    </>
+    <mesh ref={sphereRef}>
+      <sphereGeometry args={[2, 32, 32]} /> {/* Earth geometry */}
+      <shaderMaterial
+        ref={shaderMaterialRef}
+        toneMapped={false} // Disable tone mapping for custom shader
+        vertexShader={earthVertexShader}
+        fragmentShader={earthFragmentShader}
+        uniforms={{
+          uDayTexture: { value: earthDayTexture },
+          uNightTexture: { value: earthNightTexture },
+          uSpecularCloudsTexture: { value: earthSpecularCloudsTexture },
+          uSunDirection: { value: sunDirection },
+          uAtmosphereDayColor: { value: new THREE.Color("#00aaff") },
+          uAtmosphereTwilightColor: { value: new THREE.Color("#ff6600") },
+        }}
+      />
+    </mesh>
   );
 };
 
-export default Earth;
+// Sun Component
+const Sun = ({ sunDirection }) => (
+  <mesh position={sunDirection.clone().multiplyScalar(1)}>
+    {" "}
+    {/* Position based on sunDirection */}
+    <icosahedronGeometry args={[0.1, 2]} /> {/* Sun geometry */}
+    <meshBasicMaterial color="yellow" /> {/* Sun appearance */}
+  </mesh>
+);
+
+// Atmosphere Component
+const Atmosphere = ({ sunDirection }) => {
+  const atmosphereRef = useRef(); // Ref for atmosphere shader material
+
+  // Update atmosphere shader uniforms every frame
+  useFrame(() => {
+    atmosphereRef.current.uniforms.uSunDirection.value.copy(sunDirection);
+  });
+
+  return (
+    <mesh scale={1.04}>
+      {" "}
+      {/* Slightly larger than the Earth */}
+      <sphereGeometry args={[2, 32, 32]} /> {/* Atmosphere geometry */}
+      <shaderMaterial
+        ref={atmosphereRef}
+        toneMapped={false} // Disable tone mapping for custom shader
+        side={THREE.BackSide} // Render inside-out for the atmosphere effect
+        transparent={true} // Enable transparency
+        vertexShader={atmosphereVertexShader}
+        fragmentShader={atmosphereFragmentShader}
+        uniforms={{
+          uSunDirection: { value: sunDirection },
+          uAtmosphereDayColor: { value: new THREE.Color("#00aaff") },
+          uAtmosphereTwilightColor: { value: new THREE.Color("#ff6600") },
+        }}
+      />
+    </mesh>
+  );
+};
+
+// Main Canvas Component
+const EarthCanvas = () => {
+  // Calculate sun direction and store it in a normalized vector
+  const sunDirection = useMemo(
+    () => new THREE.Vector3(0, 1, 1).normalize(),
+    []
+  );
+
+  return (
+    <Canvas camera={{ position: [12, 5, 1], fov: 25 }}>
+      {" "}
+      {/* Canvas settings */}
+      <OrbitControls /> {/* User interaction controls */}
+      <ambientLight intensity={0.5} /> {/* Basic lighting */}
+      <Earth sunDirection={sunDirection} /> {/* Render the Earth */}
+      <Sun sunDirection={sunDirection} /> {/* Render the Sun */}
+      <Atmosphere sunDirection={sunDirection} /> {/* Render the Atmosphere */}
+    </Canvas>
+  );
+};
+
+export default EarthCanvas;
