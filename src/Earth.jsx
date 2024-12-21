@@ -22,14 +22,14 @@ const Earth = () => {
   earthParameters.atmosphereTwilightColor = "#ff6600";
 
   //Load Textures
-  const earthDayTexture = useTexture("../static/earth/day.jpg");
+  const earthDayTexture = useTexture("/static/earth/day.jpg");
   earthDayTexture.colorSpace = THREE.SRGBColorSpace;
   earthDayTexture.anisotropy = 8;
-  const earthNightTexture = useTexture("../static/earth/night.jpg");
+  const earthNightTexture = useTexture("/static/earth/night.jpg");
   earthNightTexture.colorSpace = THREE.SRGBColorSpace;
   earthNightTexture.anisotropy = 8;
   const earthSpecularCloudsTexture = useTexture(
-    "../static/earth/specularClouds.jpg"
+    "/static/earth/specularClouds.jpg"
   );
   earthSpecularCloudsTexture.anisotropy = 8;
 
