@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { useRef, useMemo, useCallback } from "react";
+import { useRef, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useFrame } from "@react-three/fiber";
 import earthVertexShader from "./shaders/earth/vertex.glsl";
@@ -10,8 +10,8 @@ import atmosphereFragmentShader from "./shaders/atmosphere/fragment.glsl";
 
 // Earth Component
 const Earth = ({ sunDirection }) => {
-  const sphereRef = useRef(); // Ref for the Earth mesh
-  const shaderMaterialRef = useRef(); // Ref for the shader material
+  const sphereRef = useRef();
+  const shaderMaterialRef = useRef();
 
   // Load textures for the Earth
   const earthDayTexture = useTexture("/static/earth/day.jpg");
@@ -24,8 +24,8 @@ const Earth = ({ sunDirection }) => {
   useMemo(() => {
     [earthDayTexture, earthNightTexture, earthSpecularCloudsTexture].forEach(
       (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace; // Set correct color space
-        texture.anisotropy = 4; // Lower anisotropy for better performance
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = 8;
       }
     );
   }, [earthDayTexture, earthNightTexture, earthSpecularCloudsTexture]);
@@ -33,7 +33,7 @@ const Earth = ({ sunDirection }) => {
   // Animate the Earth and update shader uniforms every frame
   useFrame(() => {
     if (sphereRef.current) {
-      sphereRef.current.rotation.y += 0.001; // Slow rotation of the Earth
+      sphereRef.current.rotation.y += 0.001;
     }
     // Update the sun direction in the shader material
     shaderMaterialRef.current.uniforms.uSunDirection.value.copy(sunDirection);
@@ -44,7 +44,7 @@ const Earth = ({ sunDirection }) => {
       <sphereGeometry args={[2, 32, 32]} /> {/* Earth geometry */}
       <shaderMaterial
         ref={shaderMaterialRef}
-        toneMapped={false} // Disable tone mapping for custom shader
+        toneMapped={false}
         vertexShader={earthVertexShader}
         fragmentShader={earthFragmentShader}
         uniforms={{
@@ -62,11 +62,10 @@ const Earth = ({ sunDirection }) => {
 
 // Sun Component
 const Sun = ({ sunDirection }) => (
-  <mesh position={sunDirection.clone().multiplyScalar(1)}>
-    {" "}
+  <mesh position={sunDirection.clone().multiplyScalar(4)}>
     {/* Position based on sunDirection */}
-    <icosahedronGeometry args={[0.1, 2]} /> {/* Sun geometry */}
-    <meshBasicMaterial color="yellow" /> {/* Sun appearance */}
+    <icosahedronGeometry args={[0.1, 2]} />
+    <meshBasicMaterial color="yellow" />
   </mesh>
 );
 
@@ -74,21 +73,19 @@ const Sun = ({ sunDirection }) => (
 const Atmosphere = ({ sunDirection }) => {
   const atmosphereRef = useRef(); // Ref for atmosphere shader material
 
-  // Update atmosphere shader uniforms every frame
   useFrame(() => {
     atmosphereRef.current.uniforms.uSunDirection.value.copy(sunDirection);
   });
 
   return (
     <mesh scale={1.04}>
-      {" "}
       {/* Slightly larger than the Earth */}
       <sphereGeometry args={[2, 32, 32]} /> {/* Atmosphere geometry */}
       <shaderMaterial
         ref={atmosphereRef}
-        toneMapped={false} // Disable tone mapping for custom shader
-        side={THREE.BackSide} // Render inside-out for the atmosphere effect
-        transparent={true} // Enable transparency
+        toneMapped={false}
+        side={THREE.BackSide}
+        transparent={true}
         vertexShader={atmosphereVertexShader}
         fragmentShader={atmosphereFragmentShader}
         uniforms={{
@@ -105,20 +102,27 @@ const Atmosphere = ({ sunDirection }) => {
 const EarthCanvas = () => {
   // Calculate sun direction and store it in a normalized vector
   const sunDirection = useMemo(
-    () => new THREE.Vector3(0, 1, 1).normalize(),
+    () => new THREE.Vector3(0, 0, 1).normalize(),
     []
   );
 
   return (
-    <Canvas camera={{ position: [12, 5, 1], fov: 25 }}>
-      {" "}
-      {/* Canvas settings */}
-      <OrbitControls /> {/* User interaction controls */}
-      <ambientLight intensity={0.5} /> {/* Basic lighting */}
-      <Earth sunDirection={sunDirection} /> {/* Render the Earth */}
-      <Sun sunDirection={sunDirection} /> {/* Render the Sun */}
-      <Atmosphere sunDirection={sunDirection} /> {/* Render the Atmosphere */}
-    </Canvas>
+    <div className="canvasMain">
+      <div className="Hello">
+        <div className="testing">Testing</div>
+      </div>
+      <div className="canva">
+        <Canvas camera={{ position: [12, 5, 1], fov: 25 }} className="c">
+          <OrbitControls enableZoom={false} />
+          <mesh>
+            <Earth sunDirection={sunDirection} />
+            <Sun sunDirection={sunDirection} />
+            <Atmosphere sunDirection={sunDirection} />
+          </mesh>
+        </Canvas>
+      </div>
+      <div className="Hello">Hello</div>
+    </div>
   );
 };
 
