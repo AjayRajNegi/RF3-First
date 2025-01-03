@@ -1,5 +1,5 @@
-import React, { Suspense } from "react";
 import * as THREE from "three";
+import React, { Suspense } from "react";
 import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Canvas, useThree } from "@react-three/fiber";
@@ -9,7 +9,6 @@ import earthFragmentShader from "./shaders/earth/fragment.glsl";
 import atmosphereVertexShader from "./shaders/atmosphere/vertex.glsl";
 import atmosphereFragmentShader from "./shaders/atmosphere/fragment.glsl";
 import { useSpring, animated } from "@react-spring/three";
-import { div } from "framer-motion/client";
 
 // Loading Component
 const LoadingScreen = () => {
