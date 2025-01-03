@@ -1,15 +1,26 @@
-import React from "react";
+import React, { Suspense } from "react";
 import * as THREE from "three";
 import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Canvas, useThree } from "@react-three/fiber";
 import earthVertexShader from "./shaders/earth/vertex.glsl";
-import { OrbitControls, useTexture } from "@react-three/drei";
+import { OrbitControls, useProgress, useTexture } from "@react-three/drei";
 import earthFragmentShader from "./shaders/earth/fragment.glsl";
 import atmosphereVertexShader from "./shaders/atmosphere/vertex.glsl";
 import atmosphereFragmentShader from "./shaders/atmosphere/fragment.glsl";
 import { useSpring, animated } from "@react-spring/three";
+import { div } from "framer-motion/client";
 
+// Loading Component
+const LoadingScreen = () => {
+  const { progress } = useProgress();
+
+  return (
+    <div>
+      <p className="loading">Loading... ({parseInt(progress)}%)</p>
+    </div>
+  );
+};
 // Earth Component
 const Earth = ({ sunDirection }) => {
   const sphereRef = useRef();
@@ -100,7 +111,6 @@ const Atmosphere = ({ sunDirection }) => {
   );
 };
 
-//Camera look at
 // Animated Camera LookAt Component
 const AnimatedCameraLookAt = ({ target }) => {
   const { camera } = useThree();
@@ -136,7 +146,7 @@ const EarthCanvas = () => {
 
   const { scale } = useSpring({
     scale: scaleTarget,
-    config: { duration: 1000 },
+    config: { duration: 1000, tension: 170, friction: 25 },
   });
 
   // Calculate sun direction
@@ -146,25 +156,27 @@ const EarthCanvas = () => {
   );
 
   return (
-    <div className="canvasMain">
-      <div className="Hello">
-        <div className="testing">
-          <button onClick={handleChangeView}>Testing</button>
+    <Suspense fallback={<LoadingScreen />}>
+      <div className="canvasMain">
+        <div className="Hello">
+          <div className="testing">
+            <button onClick={handleChangeView}>Testing</button>
+          </div>
         </div>
+        <div className="canva">
+          <Canvas camera={{ position: [12, 5, 10], fov: 25 }} className="c">
+            <AnimatedCameraLookAt target={lookAtTarget} />
+            <animated.mesh scale={scale}>
+              {/* Replace Earth, Sun, and Atmosphere with your components */}
+              <Earth sunDirection={sunDirection} />
+              <Sun sunDirection={sunDirection} />
+              <Atmosphere sunDirection={sunDirection} />
+            </animated.mesh>
+          </Canvas>
+        </div>
+        <div className="Hello">Hello</div>
       </div>
-      <div className="canva">
-        <Canvas camera={{ position: [12, 5, 10], fov: 25 }} className="c">
-          <AnimatedCameraLookAt target={lookAtTarget} />
-          <animated.mesh scale={scale}>
-            {/* Replace Earth, Sun, and Atmosphere with your components */}
-            <Earth sunDirection={sunDirection} />
-            <Sun sunDirection={sunDirection} />
-            <Atmosphere sunDirection={sunDirection} />
-          </animated.mesh>
-        </Canvas>
-      </div>
-      <div className="Hello">Hello</div>
-    </div>
+    </Suspense>
   );
 };
 
