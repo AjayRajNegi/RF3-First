@@ -1,12 +1,14 @@
 import * as THREE from "three";
 import { useRef, useMemo } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { useFrame } from "@react-three/fiber";
 import earthVertexShader from "./shaders/earth/vertex.glsl";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import earthFragmentShader from "./shaders/earth/fragment.glsl";
 import atmosphereVertexShader from "./shaders/atmosphere/vertex.glsl";
 import atmosphereFragmentShader from "./shaders/atmosphere/fragment.glsl";
+import { OrthographicCamera } from "@react-three/drei";
+import React from "react";
 
 // Earth Component
 const Earth = ({ sunDirection }) => {
@@ -62,7 +64,7 @@ const Earth = ({ sunDirection }) => {
 
 // Sun Component
 const Sun = ({ sunDirection }) => (
-  <mesh position={sunDirection.clone().multiplyScalar(4)}>
+  <mesh position={sunDirection.clone().multiplyScalar(1)}>
     {/* Position based on sunDirection */}
     <icosahedronGeometry args={[0.1, 2]} />
     <meshBasicMaterial color="yellow" />
@@ -98,23 +100,48 @@ const Atmosphere = ({ sunDirection }) => {
   );
 };
 
+//Camera look at
+const CameraLookAt = ({ target }) => {
+  const { camera } = useThree();
+
+  React.useEffect(() => {
+    if (camera) {
+      camera.lookAt(target[0], target[1], target[2]);
+      camera.updateProjectionMatrix();
+    }
+  }, [target, camera]);
+  return null;
+};
 // Main Canvas Component
 const EarthCanvas = () => {
+  const [lookAtTarget, setLookAtTarget] = React.useState([1, 7, 1]);
+  const [scale, setScale] = React.useState(3.5);
+
+  const handleChangeView = () => {
+    setLookAtTarget([0, 0, 0]);
+    setScale(1.5);
+  };
   // Calculate sun direction and store it in a normalized vector
   const sunDirection = useMemo(
     () => new THREE.Vector3(0, 0, 1).normalize(),
     []
   );
 
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
   return (
     <div className="canvasMain">
       <div className="Hello">
-        <div className="testing">Testing</div>
+        <div className="testing">
+          <button onClick={handleChangeView}>Testing</button>
+        </div>
       </div>
       <div className="canva">
-        <Canvas camera={{ position: [12, 5, 1], fov: 25 }} className="c">
-          <OrbitControls enableZoom={false} />
-          <mesh>
+        <Canvas camera={{ position: [12, 5, 10], fov: 25 }} className="c">
+          <CameraLookAt target={lookAtTarget} />
+          {/* <OrbitControls enableZoom={true} /> */}
+          <mesh scale={scale}>
             <Earth sunDirection={sunDirection} />
             <Sun sunDirection={sunDirection} />
             <Atmosphere sunDirection={sunDirection} />
@@ -127,3 +154,6 @@ const EarthCanvas = () => {
 };
 
 export default EarthCanvas;
+
+//position: [12, 5, 1]
+//camera={{ position: [0, 0, 10], fov: 25, aspect: width / height }}
