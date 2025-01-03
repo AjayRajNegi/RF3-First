@@ -37,3 +37,8 @@ body,
 .testing {
   z-index: 2;
 }
+.motionCanvas {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+}

@@ -1,14 +1,14 @@
+import React from "react";
 import * as THREE from "three";
 import { useRef, useMemo } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
 import { useFrame } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import earthVertexShader from "./shaders/earth/vertex.glsl";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import earthFragmentShader from "./shaders/earth/fragment.glsl";
 import atmosphereVertexShader from "./shaders/atmosphere/vertex.glsl";
 import atmosphereFragmentShader from "./shaders/atmosphere/fragment.glsl";
-import { OrthographicCamera } from "@react-three/drei";
-import React from "react";
+import { useSpring, animated } from "@react-spring/three";
 
 // Earth Component
 const Earth = ({ sunDirection }) => {
@@ -101,34 +101,49 @@ const Atmosphere = ({ sunDirection }) => {
 };
 
 //Camera look at
-const CameraLookAt = ({ target }) => {
+// Animated Camera LookAt Component
+const AnimatedCameraLookAt = ({ target }) => {
   const { camera } = useThree();
+  const spring = useSpring({
+    targetX: target[0],
+    targetY: target[1],
+    targetZ: target[2],
+    config: { duration: 1000 },
+  });
 
-  React.useEffect(() => {
+  // Use frame to interpolate camera lookAt
+  useFrame(() => {
     if (camera) {
-      camera.lookAt(target[0], target[1], target[2]);
+      const x = spring.targetX.get();
+      const y = spring.targetY.get();
+      const z = spring.targetZ.get();
+      camera.lookAt(x, y, z);
       camera.updateProjectionMatrix();
     }
-  }, [target, camera]);
+  });
+
   return null;
 };
 // Main Canvas Component
 const EarthCanvas = () => {
   const [lookAtTarget, setLookAtTarget] = React.useState([1, 7, 1]);
-  const [scale, setScale] = React.useState(3.5);
+  const [scaleTarget, setScaleTarget] = React.useState(3.5);
 
   const handleChangeView = () => {
     setLookAtTarget([0, 0, 0]);
-    setScale(1.5);
+    setScaleTarget(1.5);
   };
-  // Calculate sun direction and store it in a normalized vector
+
+  const { scale } = useSpring({
+    scale: scaleTarget,
+    config: { duration: 1000 },
+  });
+
+  // Calculate sun direction
   const sunDirection = useMemo(
     () => new THREE.Vector3(0, 0, 1).normalize(),
     []
   );
-
-  const width = window.innerWidth;
-  const height = window.innerHeight;
 
   return (
     <div className="canvasMain">
@@ -139,13 +154,13 @@ const EarthCanvas = () => {
       </div>
       <div className="canva">
         <Canvas camera={{ position: [12, 5, 10], fov: 25 }} className="c">
-          <CameraLookAt target={lookAtTarget} />
-          {/* <OrbitControls enableZoom={true} /> */}
-          <mesh scale={scale}>
+          <AnimatedCameraLookAt target={lookAtTarget} />
+          <animated.mesh scale={scale}>
+            {/* Replace Earth, Sun, and Atmosphere with your components */}
             <Earth sunDirection={sunDirection} />
             <Sun sunDirection={sunDirection} />
             <Atmosphere sunDirection={sunDirection} />
-          </mesh>
+          </animated.mesh>
         </Canvas>
       </div>
       <div className="Hello">Hello</div>
