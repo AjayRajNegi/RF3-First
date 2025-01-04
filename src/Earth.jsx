@@ -13,15 +13,15 @@ import { motion } from "motion/react";
 import LoadingScreen from "./LoadingScreen";
 
 // Loading Component
-const LoadingComponent = () => {
-  const { progress } = useProgress();
+// const LoadingComponent = () => {
+//   const { progress } = useProgress();
 
-  return (
-    <div>
-      <p className="loading">Loading... ({parseInt(progress)}%)</p>
-    </div>
-  );
-};
+//   return (
+//     <div>
+//       <p className="loading">Loading... ({parseInt(progress)}%)</p>
+//     </div>
+//   );
+// };
 
 // Earth Component
 const Earth = ({ sunDirection }) => {
@@ -162,45 +162,45 @@ const EarthCanvas = () => {
   // }, []);
 
   return (
-    //<Suspense fallback={<LoadingScreen />}>
-    <div className="canvasMain">
-      <div className="Hello">
-        <div className="testing">
-          <motion.div
-            initial={{ x: -200, opacity: 1 }}
-            animate={{ x: 200, opacity: 0 }}
-            transition={{ duration: 3, ease: "easeInOut" }}
-            onAnimationStart={() => console.log("Start")}
-            onAnimationComplete={() => handleChangeView()}
-          >
-            Hello
-          </motion.div>
+    <Suspense fallback={<LoadingScreen />}>
+      <div className="canvasMain">
+        <div className="Hello">
+          <div className="testing">
+            <motion.div
+              initial={{ x: -200, opacity: 1 }}
+              animate={{ x: 200, opacity: 0 }}
+              transition={{ duration: 2, ease: "easeInOut" }}
+              onAnimationComplete={() => handleChangeView()}
+              className="loading"
+            >
+              Testing
+            </motion.div>
+          </div>
         </div>
-      </div>
-      <div className="canva">
-        <Canvas camera={{ position: [12, 5, 10], fov: 25 }} className="c">
-          <AnimatedCameraLookAt target={lookAtTarget} />
-          <animated.mesh scale={scale}>
-            <Stars
-              radius={1}
-              depth={50}
-              count={5000}
-              factor={4}
-              saturation={0}
-              fade
-              speed={0.5}
-            />
+        <div className="canva">
+          <Canvas camera={{ position: [12, 5, 10], fov: 25 }} className="c">
+            <AnimatedCameraLookAt target={lookAtTarget} />
+            <animated.mesh scale={scale}>
+              <Stars
+                radius={1}
+                depth={50}
+                count={5000}
+                factor={4}
+                saturation={0}
+                fade
+                speed={0.5}
+              />
 
-            {/* Replace Earth, Sun, and Atmosphere with your components */}
-            <Earth sunDirection={sunDirection} />
-            <Sun sunDirection={sunDirection} />
-            <Atmosphere sunDirection={sunDirection} />
-          </animated.mesh>
-        </Canvas>
+              {/* Replace Earth, Sun, and Atmosphere with your components */}
+              <Earth sunDirection={sunDirection} />
+              <Sun sunDirection={sunDirection} />
+              <Atmosphere sunDirection={sunDirection} />
+            </animated.mesh>
+          </Canvas>
+        </div>
+        <div className="Hello">Hello</div>
       </div>
-      <div className="Hello">Hello</div>
-    </div>
-    //</Suspense>
+    </Suspense>
   );
 };
 
