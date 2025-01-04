@@ -170,7 +170,11 @@ const EarthCanvas = () => {
               initial={{ x: -200, opacity: 1 }}
               animate={{ x: 200, opacity: 0 }}
               transition={{ duration: 2, ease: "easeInOut" }}
-              onAnimationComplete={() => handleChangeView()}
+              onAnimationStart={() => console.log("Animation Start")}
+              onAnimationComplete={() => {
+                handleChangeView();
+                console.log("Animation End");
+              }}
               className="loading"
             >
               Testing
