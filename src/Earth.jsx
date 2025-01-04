@@ -1,17 +1,19 @@
 import * as THREE from "three";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Canvas, useThree } from "@react-three/fiber";
+import { useSpring, animated } from "@react-spring/three";
 import earthVertexShader from "./shaders/earth/vertex.glsl";
-import { OrbitControls, useProgress, useTexture } from "@react-three/drei";
+import { Loader, Stars, useProgress, useTexture } from "@react-three/drei";
 import earthFragmentShader from "./shaders/earth/fragment.glsl";
 import atmosphereVertexShader from "./shaders/atmosphere/vertex.glsl";
 import atmosphereFragmentShader from "./shaders/atmosphere/fragment.glsl";
-import { useSpring, animated } from "@react-spring/three";
+import { motion } from "motion/react";
+import LoadingScreen from "./LoadingScreen";
 
 // Loading Component
-const LoadingScreen = () => {
+const LoadingComponent = () => {
   const { progress } = useProgress();
 
   return (
@@ -20,6 +22,7 @@ const LoadingScreen = () => {
     </div>
   );
 };
+
 // Earth Component
 const Earth = ({ sunDirection }) => {
   const sphereRef = useRef();
@@ -153,19 +156,41 @@ const EarthCanvas = () => {
     () => new THREE.Vector3(0, 0, 1).normalize(),
     []
   );
+  // useEffect(() => {
+  //   handleChangeView();
+  //   console.log("useEffect");
+  // }, []);
 
   return (
     <Suspense fallback={<LoadingScreen />}>
       <div className="canvasMain">
         <div className="Hello">
           <div className="testing">
-            <button onClick={handleChangeView}>Testing</button>
+            <motion.div
+              initial={{ x: -200, opacity: 1 }}
+              animate={{ x: 200, opacity: 0 }}
+              transition={{ duration: 3, ease: "easeInOut" }}
+              // onAnimationStart={() => console.log("Start")}
+              onAnimationComplete={() => handleChangeView()}
+            >
+              Hello
+            </motion.div>
           </div>
         </div>
         <div className="canva">
           <Canvas camera={{ position: [12, 5, 10], fov: 25 }} className="c">
             <AnimatedCameraLookAt target={lookAtTarget} />
             <animated.mesh scale={scale}>
+              <Stars
+                radius={1}
+                depth={50}
+                count={5000}
+                factor={4}
+                saturation={0}
+                fade
+                speed={0.5}
+              />
+
               {/* Replace Earth, Sun, and Atmosphere with your components */}
               <Earth sunDirection={sunDirection} />
               <Sun sunDirection={sunDirection} />
@@ -180,6 +205,3 @@ const EarthCanvas = () => {
 };
 
 export default EarthCanvas;
-
-//position: [12, 5, 1]
-//camera={{ position: [0, 0, 10], fov: 25, aspect: width / height }}
